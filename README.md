@@ -55,6 +55,13 @@ PQ 0.4444 (750 TP / 326 FP / 508 FN).
 
 All settings live in `src/filament_seg/config.py`.
 
+## Report
+
+`report/` holds the LaTeX source of the technical report (organizers' ACM
+template), its figures, and `report/analysis.py`, which recomputes every number
+in it (bootstrap intervals, recall by annotator agreement, m:n relations) from
+the validation CSVs written by the notebook.
+
 ## Repository layout
 
 ```
