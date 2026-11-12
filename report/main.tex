@@ -59,7 +59,7 @@ Guide mode is on.}
 \section{Introduction}
     This report goes over the details of our submitted solution to the Solar Filament Segmentation Challenge~2026 \cite{filament-segmentation-2026}. The challenge, launched on July~10,~2026, is organized by the Earth-Space AI Research (ESAIR) Lab\footnote{\href{https://www.esairlab.com/home}{www.esairlab.com/}}. This challenge utilizes the MAGFiLO dataset for evaluation of the segmentation algorithms \cite{ahmadzadeh2024dataset}.
 
-    We contribute (i) a two-stage detect-then-refine pipeline whose every reported number is reproducible from a public repository\footnote{\url{https://github.com/syehsyoh-dokling/filament-solution}} (code, weights, notebook), and (ii) an error analysis on held-out training observations showing that most remaining errors fall on filaments whose very existence the expert annotators disagree on. We report negative results as well, because they are what support the second point.
+    We contribute (i) a two-stage detect-then-refine pipeline whose every reported number is reproducible from a public repository\footnote{\url{https://github.com/syehsyoh-dokling/filament-solution}} (code, weights, notebook), and (ii) an error analysis on held-out training observations showing that, on observations with several annotators, most remaining errors fall on filaments whose very existence the expert annotators disagree on. Inter-rater variability is a known limit of segmentation benchmarks \cite{warfield2004staple,maierhein2018rankings}; we quantify it for MAGFiLO at the instance level, with the competition's own metric. We report negative results as well, because they are what support the second point.
 
 
 % ==================================== %
@@ -100,7 +100,7 @@ Figure~\ref{fig:examples} shows two held-out observations that each have two ann
   \centering
   \includegraphics[width=0.92\textwidth]{fig_examples.png}
   \vspace{-3mm}
-  \caption{Two held-out observations, each annotated by two experts (left, middle), and our prediction (right). In both, annotator~A marks 14--16 filaments and annotator~B only~8; many of A's extra filaments are small.}
+  \caption{Two held-out observations, each annotated by two experts (left, middle), and our prediction (right). In both, annotator~A marks 14--16 filaments and annotator~B only~8.}
   \label{fig:examples}
 \end{figure*}
 
@@ -112,6 +112,8 @@ Figure~\ref{fig:examples} shows two held-out observations that each have two ann
 
 \subsection{Strategy}
 We score held-out predictions with the organizers' PQ definition \cite{kirillov2019panoptic}: a pair is a true positive when IoU $>$0.5, ground truth is grouped per annotator pass, and predictions per observation. Our implementation follows the organizers' self-evaluation notebook but works on RLEs. Uncertainty is a 95\% bootstrap interval over the 106 held-out observations \cite{efron1979bootstrap} (2{,}000 resamples; paired when comparing variants) and a Wilson interval for recalls \cite{wilson1927}. For the three pipelines we scored both ways, held-out PQ ranked them in the same order as the public leaderboard, 0.04--0.06 higher.
+
+\textbf{Our leaderboard entries.} Our team's highest public score (0.55), four further entries at 0.54--0.55 and one blend at 0.45 are \emph{not} this method: they resubmitted, with minor post-processing, the output of a public notebook whose predictions are stored precomputed inside the notebook, which we could neither reproduce nor attribute to a model. We report only results our repository reproduces, and select the 0.39 entry as our final submission. Two of our submissions were rejected by the evaluator because instances overlapped; Stage~3 therefore enforces disjoint masks.
 
 \subsection{Results}
 \begin{table}[t]
@@ -156,13 +158,13 @@ Matched pairs have a mean IoU of 0.69 and a mean Dice of 0.81 (Fig.~\ref{fig:res
 \subsection{Where the errors are: annotator disagreement}
 Forty of the 106 held-out observations have two or more annotator passes. We scored each annotator's masks, as if they were predictions, against every \emph{other} annotator of the same observation, and scored the model against exactly the same reference passes. Annotators reach PQ 0.34 (95\% CI 0.30--0.38, mean matched IoU 0.63); the model reaches 0.45 (0.41--0.49, IoU 0.69). The paired difference is +0.11 (+0.08 to +0.14), and the model scores higher on 35 of the 40 observations. We read this as the model having learned the annotators' \emph{common} convention, so it is closer to each of them than they are to one another, not as the model seeing filaments better than experts.
 
-We grouped every ground-truth filament on these observations by how many of the \emph{other} annotators also marked it (IoU $>$0.5). Figure~\ref{fig:results}a shows the result: the model finds 84\% of the filaments marked by all annotators, 70\% of those marked by some, and only 34\% of those marked by a single annotator; the last group is also smaller (median 1{,}157 vs 1{,}663~px). Conversely, of the 213 predictions that count as false positives against one annotator, 112 (53\%) were drawn by another annotator of the same image.
+We grouped every ground-truth filament on these observations by how many of the \emph{other} annotators also marked it (IoU $>$0.5). Figure~\ref{fig:results}a shows the result: the model finds 84\% of the filaments marked by all annotators, 70\% of those marked by some, and only 34\% of those marked by a single annotator; the last group is also smaller (median 1{,}157 vs 1{,}663~px). This is not a size effect: within each third of the filament-area distribution, recall is 78--87\% on consensus filaments and 31--36\% on single-annotator ones, and in a logistic regression on both, the share of annotators who marked a filament is the dominant predictor ($z=11.1$) while log-area is not significant ($z=1.4$). Conversely, of the 213 predictions that count as false positives against one annotator, 112 (53\%) were drawn by another annotator of the same image.
 
-To separate detection from mask quality we fed the refiner the ground-truth boxes instead of detector boxes. PQ rises from 0.44 to 0.60, and on single-annotator observations the refiner then recovers 545 of 556 filaments with a mean IoU of 0.72, above the 0.63 inter-annotator IoU (the refiner is given the annotator's own box here, which favours it). Mask shape is thus close to human agreement; the remaining gap is about \emph{which} faint, small structures count as filaments, a decision on which the experts themselves differ.
+To separate detection from mask quality we fed the refiner the ground-truth boxes instead of detector boxes. PQ rises from 0.44 to 0.60, and on single-annotator observations the refiner then recovers 545 of 556 filaments with a mean IoU of 0.72, above the 0.63 inter-annotator IoU (the refiner is given the annotator's own box here, which favours it). Mask shape is thus close to human agreement; the remaining gap is about \emph{which} structures count as filaments, a decision on which the experts themselves differ.
 
 \subsection{Strengths, weaknesses and improvements}
 \textbf{Strengths.} The pipeline is fast, deterministic, strictly non-overlapping, and reproduces its submission byte-for-byte; on consensus filaments its recall is 84\%.
-\textbf{Weaknesses.} Recall on small, faint filaments is low; masks are sensitive to their boundary (a 1~px dilation already costs 0.017 PQ, a 2~px erosion 0.18), which also explains why our earlier global 512~px semantic model scored only 0.29 on the leaderboard; one test observation receives no instance.
+\textbf{Weaknesses.} Recall on filaments that only one annotator marks is low (34\%), whatever their size; masks are sensitive to their boundary (a 1~px dilation already costs 0.017 PQ, a 2~px erosion 0.18), which also explains why our earlier global 512~px semantic model scored only 0.29 on the leaderboard; one test observation receives no instance.
 \textbf{Improvements.} Training on consensus-weighted targets (e.g., soft labels from the number of annotators who marked a filament) instead of treating every pass as equally correct, and calibrating the detector's confidence to annotator agreement. For evaluation we suggest reporting recall stratified by annotator agreement next to PQ, and PQ relative to the inter-annotator ceiling; both are cheap to compute and make scores comparable across datasets with different labelling conventions.
 
 
