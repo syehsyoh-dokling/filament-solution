@@ -30,7 +30,7 @@
 
 \begin{document}
 
-\title{Where Filament Segmentation Fails: Model Errors Concentrate on Filaments the Annotators Disagree On}
+\title[Where Filament Segmentation Fails]{Where Filament Segmentation Fails: Model Errors Concentrate on Filaments the Annotators Disagree On}
 \subtitle{A Solution to the Solar Filament Segmentation Challenge 2026} % DO NOT CHANGE
 
 
@@ -164,7 +164,7 @@ We grouped every ground-truth filament on these observations by how many of the 
 To separate detection from mask quality we fed the refiner the ground-truth boxes instead of detector boxes. PQ rises from 0.44 to 0.60, and on single-annotator observations the refiner then recovers 545 of 556 filaments with a mean IoU of 0.72, above the 0.63 inter-annotator IoU (the refiner is given the annotator's own box here, which favours it). Mask shape is thus close to human agreement; the remaining gap is about \emph{which} structures count as filaments, a decision on which the experts themselves differ.
 
 \subsection{Strengths, weaknesses and improvements}
-\textbf{Strengths.} The pipeline is fast, deterministic, strictly non-overlapping, and reproduces its submission byte-for-byte; on consensus filaments its recall is 84\%.
+\textbf{Strengths.} The pipeline is fast and deterministic, its instances never overlap, and it reproduces its submission byte-for-byte; on consensus filaments its recall is 84\%.
 \textbf{Weaknesses.} Recall on filaments that only one annotator marks is low (34\%), whatever their size; masks are sensitive to their boundary (a 1~px dilation already costs 0.017 PQ, a 2~px erosion 0.18), which also explains why our earlier global 512~px semantic model scored only 0.29 on the leaderboard; one test observation receives no instance because the two stages produce no non-empty candidate for it.
 \textbf{Improvements.} Training on consensus-weighted targets (e.g., soft labels from the number of annotators who marked a filament) instead of treating every pass as equally correct (pooling all passes as detector targets was not enough), and calibrating the detector's confidence to annotator agreement. For evaluation we suggest reporting recall stratified by annotator agreement next to PQ, and PQ relative to the inter-annotator ceiling; both are cheap to compute and make scores comparable across datasets with different labelling conventions.
 
