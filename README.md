@@ -12,6 +12,10 @@ retraining is required.
 | Held-out training observations (106 observations, 170 annotator passes) | **0.444** | 750 | 326 | 508 |
 | Public leaderboard (submission 58270041) | **0.39** | | | |
 
+Image-level Dice on the same held-out passes (`torchmetrics` `DiceScore`, all
+instances merged per annotator pass): mean **0.66**, median 0.70
+(`report/image_dice.py`).
+
 The held-out split is by observation (seed 42, 15 %); none of the three models
 saw these images during training. Scores use the organizers' Panoptic Quality
 definition (IoU > 0.5), re-implemented on RLEs in `src/filament_seg/metrics.py`
@@ -58,9 +62,10 @@ All settings live in `src/filament_seg/config.py`.
 ## Report
 
 `report/` holds the LaTeX source of the technical report (organizers' ACM
-template), its figures, and `report/analysis.py`, which recomputes every number
-in it (bootstrap intervals, recall by annotator agreement, m:n relations) from
-the validation CSVs written by the notebook.
+template), its figures, and the scripts that recompute its numbers from the
+validation CSVs written by the notebook: `analysis.py` (bootstrap intervals,
+recall by annotator agreement, m:n relations), `image_dice.py` (image-level
+Dice), `human_vs_model.py` and `size_control.py`.
 
 ## Repository layout
 
